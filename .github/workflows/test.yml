@@ -7,6 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HOSTNAME: ${{ secrets.HOSTNAME }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      ROOMS: ${{ secrets.ROOM }}
+      DURATION: ${{ secrets.DURATION }}
+      RATE: ${{ secrets.RATE }}
+      INSTANCES: ${{ secrets.INSTANCES }}
     steps:
       - uses: actions/checkout@v4
 
