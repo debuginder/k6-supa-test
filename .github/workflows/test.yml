@@ -1,0 +1,26 @@
+name: Test
+on: 
+  workflow_dispatch:
+
+jobs:
+  testjob:
+    runs-on: ubuntu-latest
+    env:
+      HOSTNAME: ${{ secrets.HOSTNAME }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: grafana/setup-k6-action@v1
+
+      - uses: grafana/run-k6-action@v1
+        with:
+          path: test.js
+          flags: --out json=results.json
+
+      # https://github.com/grafana/k6-example-github-actions/blob/main/.github/workflows/basic.yml
+      - name: Upload performance test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-report
+          path: results.json
+    
