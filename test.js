@@ -78,7 +78,7 @@ export default () => {
               payload: {
                 event: "new message",
                 payload: {
-                  message: "≡ƒöÑ Stress Test Message",
+                  message: "Hello world",
                   created_at: Date.now(),
                 },
               },
