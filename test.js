@@ -1,110 +1,99 @@
 import { check } from "k6";
-import http from "k6/http";
 import ws from "k6/ws";
 
+// Environment config
 const token = __ENV.SUPABASE_KEY;
 const socketURI = `wss://${__ENV.HOSTNAME}/realtime/v1/websocket`;
 const conns = __ENV.CONNS || 1;
 const instances = __ENV.INSTANCES ? parseInt(__ENV.INSTANCES) : 1;
-const rate = __ENV.RATE ? parseInt(__ENV.RATE) : 1;
-const roomNumber = __ENV.ROOMS ? parseInt(__ENV.ROOMS) : 1;
-const baseDuration = __ENV.DURATION || 60;
-const duration = parseInt(baseDuration) + 30;
+const rate = __ENV.RATE ? parseInt(__ENV.RATE) : 10;
+const roomNumber = __ENV.ROOMS ? parseInt(__ENV.ROOMS) : 20;
+const baseDuration = __ENV.DURATION || 120;
+const duration = parseInt(baseDuration) + 60;
 
-const rooms = [];
-for (let i = 0; i < roomNumber; i++) {
-  rooms.push(`channel_${i}`);
-}
+// Generate room names
+const rooms = Array.from({ length: roomNumber }, (_, i) => `channel_${i}`);
 
+// Ramp up from 0 to 10000 virtual users, then sustain, then ramp down
 export const options = {
-  vus: 1,
-  scenarios: {
-    broadcast_authenticated: {
-      executor: "shared-iterations",
-      vus: 1,
-      iterations: 1,
-      maxDuration: `${duration}s`,
-    },
-  },
+  stages: [
+    { duration: '2m', target: 1000 },
+    { duration: '2m', target: 3000 },
+    { duration: '3m', target: 6000 },
+    { duration: '4m', target: 10000 },
+    { duration: '3m', target: 10000 },
+    { duration: '2m', target: 0 },
+  ],
+  // thresholds: {
+  //   checks: ['rate>0.95'], // Ensure 95% of checks pass
+  // },
 };
 
 export default () => {
   const URL = `${socketURI}?apikey=${token}`;
+
   const res = ws.connect(URL, {}, (socket) => {
     socket.on("open", () => {
       rooms.forEach((room) => {
-        socket.send(
-          JSON.stringify({
-            topic: `realtime:${room}`,
-            event: "phx_join",
-            payload: {
-              config: {
-                broadcast: {
-                  self: true,
-                },
-                presence: {
-                  key: "",
-                },
-                private: false,
-              },
-              access_token: token,
+        socket.send(JSON.stringify({
+          topic: `realtime:${room}`,
+          event: "phx_join",
+          payload: {
+            config: {
+              broadcast: { self: true },
+              presence: { key: "" },
+              private: false,
             },
-            ref: "1",
-            join_ref: "1",
-          })
-        );
+            access_token: token,
+          },
+          ref: "1",
+          join_ref: "1",
+        }));
 
-        socket.send(
-          JSON.stringify({
-            topic: `realtime:${room}`,
-            event: "access_token",
-            payload: {
-              access_token: token,
-            },
-            ref: "2",
-          })
-        );
+        socket.send(JSON.stringify({
+          topic: `realtime:${room}`,
+          event: "access_token",
+          payload: { access_token: token },
+          ref: "2",
+        }));
       });
 
+      // Send heartbeat
       socket.setInterval(() => {
-        socket.send(
-          JSON.stringify({
-            topic: "phoenix",
-            event: "heartbeat",
-            payload: {},
-            ref: 0,
-          })
-        );
-      }, 30 * 1000);
+        socket.send(JSON.stringify({
+          topic: "phoenix",
+          event: "heartbeat",
+          payload: {},
+          ref: 0,
+        }));
+      }, 30000);
 
+      // Send messages to random rooms
       socket.setInterval(() => {
         rooms.forEach((room) => {
-          if (Math.floor(Math.random() * (conns * instances / 10)) < rate) {
-            socket.send(
-              JSON.stringify({
-                topic: `realtime:${room}`,
-                event: "broadcast",
+          if (Math.random() < rate / (conns * instances)) {
+            socket.send(JSON.stringify({
+              topic: `realtime:${room}`,
+              event: "broadcast",
+              payload: {
+                event: "new message",
                 payload: {
-                  event: "new message",
-                  payload: {
-                    message: "Hello, world!",
-                    created_at: Date.now(),
-                  },
+                  message: "≡ƒöÑ Stress Test Message",
+                  created_at: Date.now(),
                 },
-                ref: 0,
-              })
-            );
+              },
+              ref: 0,
+            }));
           }
         });
-      }, 10 * 1000);
+      }, 5000); // Every 5s try to broadcast
     });
 
     socket.on("message", (msg) => {
       msg = JSON.parse(msg);
-
       if (msg.event === "broadcast") {
         check(msg, {
-          "received broadcast event": (m) => m.event === "broadcast",
+          "received broadcast": (m) => m.event === "broadcast",
         });
       }
     });
