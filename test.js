@@ -34,8 +34,8 @@ export const options = {
     { duration: '2m', target: 2000 },
     { duration: '2m', target: 4000 },
     { duration: '2m', target: 6000 },
-    { duration: '2m', target: 8000 },
-    { duration: '3m', target: 8000 },
+    // { duration: '2m', target: 8000 },
+    { duration: '3m', target: 6000 },
     { duration: '2m', target: 0 },
   ],
   // thresholds: {
