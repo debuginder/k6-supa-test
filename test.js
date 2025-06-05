@@ -15,19 +15,34 @@ const duration = parseInt(baseDuration) + 60;
 const rooms = Array.from({ length: roomNumber }, (_, i) => `channel_${i}`);
 
 // Ramp up from 0 to 10000 virtual users, then sustain, then ramp down
+// export const options = {
+//   stages: [
+//     { duration: '2m', target: 1000 },
+//     { duration: '2m', target: 3000 },
+//     { duration: '3m', target: 6000 },
+//     { duration: '4m', target: 10000 },
+//     { duration: '3m', target: 10000 },
+//     { duration: '2m', target: 0 },
+//   ],
+//   // thresholds: {
+//   //   checks: ['rate>0.95'], // Ensure 95% of checks pass
+//   // },
+// };
+
 export const options = {
   stages: [
-    { duration: '2m', target: 1000 },
-    { duration: '2m', target: 3000 },
-    { duration: '3m', target: 6000 },
-    { duration: '4m', target: 10000 },
-    { duration: '3m', target: 10000 },
+    { duration: '2m', target: 2000 },
+    { duration: '2m', target: 4000 },
+    { duration: '2m', target: 6000 },
+    { duration: '2m', target: 8000 },
+    { duration: '3m', target: 8000 },
     { duration: '2m', target: 0 },
   ],
   // thresholds: {
   //   checks: ['rate>0.95'], // Ensure 95% of checks pass
   // },
 };
+
 
 export default () => {
   const URL = `${socketURI}?apikey=${token}`;
