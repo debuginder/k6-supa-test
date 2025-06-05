@@ -33,10 +33,10 @@ export const options = {
   stages: [
     { duration: '2m', target: 2000 },
     { duration: '2m', target: 4000 },
-    { duration: '2m', target: 6000 },
+    // { duration: '2m', target: 6000 },
     // { duration: '2m', target: 8000 },
-    { duration: '3m', target: 6000 },
-    { duration: '2m', target: 0 },
+    { duration: '3m', target: 5000 },
+    { duration: '3m', target: 0 },
   ],
   // thresholds: {
   //   checks: ['rate>0.95'], // Ensure 95% of checks pass
